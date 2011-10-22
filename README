@@ -1,0 +1,3 @@
+Something I'm working on to get streaming video directly from openFrameworks to the interweb working w/o the need of a ffmpeg/gstreamer. When finished you can webcast this using i.e. icecast server.
+
+Note: when you can still read this message, this code is really buggy and this repository used as backup.

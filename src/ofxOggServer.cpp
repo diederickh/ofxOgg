@@ -1,20 +1,97 @@
-#include "OggHTTP.h"
+#include "ofxOggServer.h"
+#include "ofxOggConnection.h"
 
-OggHTTP::OggHTTP() {
+
+ofxOggServer* ofxOggServer::instance_ = NULL;
+//ofxKeylogger* ofxKeylogger::instance = NULL;
+
+ofxOggServer::ofxOggServer() 
+:server_port(0)
+,server_host("*")
+,sock(NULL)
+,reactor(NULL)
+,address(NULL)
+{
+	instance_ = this;
 }
 
-OggHTTP::~OggHTTP() {
-	worker.shutdown();
-	thread.join();
+ofxOggServer::~ofxOggServer() {
+	if(sock != NULL) {
+		delete sock;
+	}
+	if(reactor != NULL) {
+		delete reactor;
+	}
+	if(address != NULL) {
+		delete address; 
+	}
+}
+
+ofxOggServer& ofxOggServer::instance() {
+	return *instance_;
 }
 
 
-void OggHTTP::setup(int w, int h, int bytesPerSecond, int nPort) {
-	port = nPort;
+void ofxOggServer::setupServer(int port) {
+	server_port = port;
+}
+
+void ofxOggServer::setupServer(string host, int port) {
+	server_host = host;
+	server_port = port;
+}
+
+bool ofxOggServer::start() {
+	if(sock != NULL) {
+		printf("! error starting ogg server, already created\n");
+		return false;
+	}
+	if(server_host == "*") {	
+		IPAddress wildcard_address;
+		address = new SocketAddress(wildcard_address, server_port);
+	}
+	else {
+		address = new SocketAddress(server_host, server_port);		
+	}
+
+	sock = new ServerSocket(*address);
+	reactor = new SocketReactor();
+	acceptor = new ofxOggAcceptor<ofxOggConnection>(*sock, *reactor, this);
+	ofxOggAcceptor<ofxOggConnection> acc(*sock, *reactor, this);
+//	AutoPtr<ofxOggAcceptor<ofxOggConnection> > p(&acc);
+	//acceptor = &acc;
+	send_thread.start(send_handler);	
+//	Thread t;
+//	t.start(*reactor);
+	thread = new Thread();
+	thread->start(*reactor);
+	
+	// start send handler thread.
+
+	return true;
+}
+
+void ofxOggServer::addClient(ofxOggConnection* client) {
+	clients.push_back(client);
+}
+
+void ofxOggServer::removeClient(ofxOggConnection* client) {
+	mutex.lock();
+	vector<ofxOggConnection*>::iterator it = std::find(clients.begin(), clients.end(), client);
+	if(it != clients.end()) {
+		printf("! removing clients.\n");
+		clients.erase(it);
+	}
+	else {
+		printf("! error while trying to find a connection object.\n");
+	}
+	mutex.unlock();
+}
+
+void ofxOggServer::setupOgg(int w, int h, int bytesPerPixel) {
 	width = w;
 	height = h;
-	bps = bytesPerSecond;
-	worker.setup(port);
+	bpp = bytesPerPixel;
 	
 	th_info_init(&theora_info);    
 	theora_info.frame_width = ((w + 15) >>4)<<4; // why (?)
@@ -25,12 +102,12 @@ void OggHTTP::setup(int w, int h, int bytesPerSecond, int nPort) {
     theora_info.pic_y = 0;
 	theora_info.colorspace = TH_CS_UNSPECIFIED;
     theora_info.pixel_fmt = TH_PF_420;
-    theora_info.fps_numerator = 15;
+    theora_info.fps_numerator = 35;
     theora_info.fps_denominator = 1;
     theora_info.aspect_numerator = 1;
     theora_info.aspect_denominator = 1;
 	theora_info.target_bitrate = 800;
-	theora_info.quality = 63;
+	theora_info.quality = 23;
 	theora_info.keyframe_granule_shift = 0;
 	
 	// context to work with.
@@ -67,7 +144,6 @@ void OggHTTP::setup(int w, int h, int bytesPerSecond, int nPort) {
 		header_buffer.storeBytes(header_page.header, header_page.header_len);
 		header_buffer.storeBytes(header_page.body, header_page.body_len);
 	}
-	worker.header_buffer = header_buffer;
 	
 	// Setup conversion objects
 	// ------------------------
@@ -124,17 +200,14 @@ void OggHTTP::setup(int w, int h, int bytesPerSecond, int nPort) {
 	out_strides[2] = ycbcr[2].stride;
 
 	line_size = w * 3;	
-
-	printf("created ogg stream\n");
-	
 }
 
-void OggHTTP::start() {
-	worker.header_page = header_page;
-	thread.start(worker);
+IOBuffer ofxOggServer::getOggHeaderBuffer() {
+	return header_buffer;
 }
 
-void OggHTTP::sendToClients(unsigned char* pixels) {
+
+void ofxOggServer::addFrame(unsigned char* pixels) {
 	in_image = vpx_img_wrap(
 		in_image
 		,VPX_IMG_FMT_RGB24
@@ -172,6 +245,13 @@ void OggHTTP::sendToClients(unsigned char* pixels) {
 			new_buffer.storeBytes(oggpage.body, oggpage.body_len); 
 		}
 	}
+	send_handler.addBuffer(new_buffer);
 	
-	worker.sendToClients(new_buffer);		
+	
 }
+
+vector<ofxOggConnection*>& ofxOggServer::getClients() {
+	return clients;
+}
+
+

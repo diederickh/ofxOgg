@@ -20,22 +20,28 @@ void OggHTTPClient::run() {
 }
 
 void OggHTTPClient::readFromSocket() {
-
+	if(send_header) {
+		return;
+	}
 	//return;
 	char tmp_buf[4*4096];
 	ssize_t bytes_read = read(sock, tmp_buf, 4096);
+	if(bytes_read == -1) {
+		server.removeClient(this);
+		return;
+	}
 	int total_read = bytes_read;
 	// check if we have a complete http request.
 	
 	if(bytes_read > 0) {
-		printf("++++++++++++++++++++++++++++++\n");
+//		printf("++++++++++++++++++++++++++++++\n");
 	}
 	std::copy(tmp_buf, tmp_buf+bytes_read, std::back_inserter(read_buffer));
 	for(int i = 0; i < read_buffer.size(); ++i) {
-		printf("%c", read_buffer[i]);
+//		printf("%c", read_buffer[i]);
 	}
 	if(bytes_read > 0) {
-		printf("---------------------------------\n\n");
+//		printf("---------------------------------\n\n");
 	}
 	sendHTTPResponse();
 }
@@ -78,9 +84,10 @@ void OggHTTPClient::sendHTTPResponse() {
 	const char* http_data	= http_header.c_str();
 	int http_to_send		= http_len;
 	int http_total			= 0;
-	
+	send_header = true;
 	while(http_to_send > 0) {
 		int http_done = write(sock, http_data+http_total, http_to_send);
+		
 		if(http_done == -1) {
 			server.removeClient(this);
 			return;
@@ -91,7 +98,7 @@ void OggHTTPClient::sendHTTPResponse() {
 
 	
 	// now send theora headers.
-	send_header = true;
+
 	sendToClient(server.header_buffer);
 
 }
@@ -102,17 +109,17 @@ void OggHTTPClient::sendToClient(IOBuffer newbuf) {
 	}
 
 	int to_send = newbuf.getNumBytesStored();
-	printf("send page: %d\n", to_send);
+	//printf("send page: %d\n", to_send);
 	int bytes_left = to_send;
 	int bytes_send = 0;
 	while(bytes_left > 0) {
 		int done = write(sock, newbuf.getPtr()+bytes_send, bytes_left);
 		if(done == -1) {	
-			printf("==================== removing client!!!\n");
+		//	printf("==================== removing client!!!\n");
 			server.removeClient(this);
 			return;
 		}
-		printf(">>>>>>>>>>>>>> %d\n", done);
+		//printf(">>>>>>>>>>>>>> %d\n", done);
 		bytes_left -= done;
 		bytes_send += done;
 	}

@@ -43,7 +43,7 @@ public:
 private:
 
 	bool			done;
-	Mutex			mutex;
+	//Mutex			mutex;
 	OggHTTPWorker&	server;
 //	StreamSocket	sock;
 	IOBuffer		send_buffer;

@@ -34,7 +34,7 @@ void ofxOggSendHandler::addBuffer(IOBuffer buf) {
 	mutex.lock();
 		buffers.push_back(buf);
 		prebuffers.push_back(buf);
-		if(prebuffers.size()>64) {
+		if(prebuffers.size()>40) {
 			prebuffers.erase(prebuffers.begin());
 		}
 	mutex.unlock();

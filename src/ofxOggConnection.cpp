@@ -61,23 +61,6 @@ void ofxOggConnection::onReadable(const AutoPtr<ReadableNotification>& pNotif) {
 	}
 }
 
-void ofxOggConnection::send(IOBuffer buf) {
-	int num_bytes = buf.getNumBytesStored();
-	int bytes_sent = 0;
-	int left = num_bytes;
-	while(left > 0) {
-		int done = sock.sendBytes(buf.getPtr()+bytes_sent, num_bytes);
-		if(done == -1) {
-			ofxOggServer::instance().removeClient(this);
-			delete this;
-			return;
-		}
-		left -= done;
-		bytes_sent += done;
-	//	printf(">> sending %d/%d\n", bytes_sent, num_bytes);
-	}
-}
-
 void ofxOggConnection::parseHTTPRequest() {
 	bool complete_header = false;
 	int num_bytes = read_buffer.getNumBytesStored();
@@ -118,6 +101,7 @@ void ofxOggConnection::sendOggHeader() {
 	send(ofxOggServer::instance().getOggHeaderBuffer());
 }
 
+
 void ofxOggConnection::sendHTTPResponse() {
 	std::stringstream ss;
 	ss	<< 	"HTTP/1.0 200 OK\r\n"
@@ -132,6 +116,27 @@ void ofxOggConnection::sendHTTPResponse() {
 	send(http_header_buffer);
 
 }
+
+
+void ofxOggConnection::send(IOBuffer buf) {
+	int num_bytes = buf.getNumBytesStored();
+	int bytes_sent = 0;
+	int left = num_bytes;
+	while(left > 0) {
+		printf(">> sending...");
+		int done = sock.sendBytes(buf.getPtr()+bytes_sent, num_bytes);
+		printf("..\n");
+		if(done == -1) {
+			ofxOggServer::instance().removeClient(this);
+			delete this;
+			return;
+		}
+		left -= done;
+		bytes_sent += done;
+		printf(">> sending %d/%d\n", bytes_sent, num_bytes);
+	}
+}
+
 
 void ofxOggConnection::onShutdown(const AutoPtr<ShutdownNotification>& pNotif) {
 	printf("on shutdown");

@@ -29,9 +29,9 @@ void OggHTTP::setup(int w, int h, int bytesPerSecond, int nPort) {
     theora_info.fps_denominator = 1;
     theora_info.aspect_numerator = 1;
     theora_info.aspect_denominator = 1;
-	theora_info.target_bitrate = 800;
-	theora_info.quality = 63;
-	theora_info.keyframe_granule_shift = 0;
+//	theora_info.target_bitrate = 800;
+	theora_info.quality = 43;
+//	theora_info.keyframe_granule_shift = 0;
 	
 	// context to work with.
 	// -----------------------

@@ -106,9 +106,9 @@ void ofxOggServer::setupOgg(int w, int h, int bytesPerPixel) {
     theora_info.fps_denominator = 1;
     theora_info.aspect_numerator = 1;
     theora_info.aspect_denominator = 1;
-	theora_info.target_bitrate = 800;
-	theora_info.quality = 23;
-	theora_info.keyframe_granule_shift = 0;
+	theora_info.target_bitrate = 800000;
+//	theora_info.quality = 6;
+	theora_info.keyframe_granule_shift = 1;
 	
 	// context to work with.
 	// -----------------------
@@ -117,7 +117,7 @@ void ofxOggServer::setupOgg(int w, int h, int bytesPerPixel) {
 		printf("Error: cannot create context.\n");
 		exit(1);
 	}	
-    th_info_clear(&theora_info);
+   th_info_clear(&theora_info);
 	
 	
 	// Add obligatory headers
@@ -245,6 +245,7 @@ void ofxOggServer::addFrame(unsigned char* pixels) {
 			new_buffer.storeBytes(oggpage.body, oggpage.body_len); 
 		}
 	}
+
 	send_handler.addBuffer(new_buffer);
 	
 	

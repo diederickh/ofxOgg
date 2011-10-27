@@ -1,5 +1,7 @@
 #include "ofxOgg.h"
 
+#include "Poco/Glob.h"
+#include "Poco/Path.h"
 
 ofxOgg::ofxOgg() {
 }
@@ -22,6 +24,24 @@ ofxOgg::~ofxOgg() {
 }
 
 void ofxOgg::setup(int w, int h, int bytesPerPixel) {
+	string of_dp = ofToDataPath("./", true);
+	string dp = of_dp +"*.ogv";
+	std::set<std::string> files;
+	Poco::Glob::glob(dp, files);
+	std:set<std::string>::iterator it = files.begin();
+	number_of_ogg_files = files.size();
+	printf("Number of ogg files found: %d\n", number_of_ogg_files);
+
+
+	char buf[512];
+	sprintf(buf, "openFramweworksAppMovie-%04d.ogv", number_of_ogg_files);
+	string filename(buf);
+	output_file_path = ofToDataPath(filename, true);
+	printf("Creating file: %s\n", output_file_path.c_str());
+	int i = 44;
+
+
+	
 	width = w;
 	height = h;
 	bpp = bytesPerPixel;
@@ -67,7 +87,7 @@ void ofxOgg::setup(int w, int h, int bytesPerPixel) {
 	th_comment_add(&comment, (char *)"openFrameworks");
 	comment.vendor = (char *)"openFrameworks";
 	
-	out_file= fopen("ogg_pipe.ogv", "w");
+	out_file= fopen(output_file_path.c_str(), "w");
 	if(!out_file) {
 		printf("Error: cannot create output file.\n");
 		exit(1);
@@ -181,13 +201,20 @@ void ofxOgg::addFrame(unsigned char* pixels) {
 	ogg_packet oggpacket;
 //	int last = (i == number_of_frames-1) ? 1 : 0; // set to non zero for last frame 
 	int last = 0;
+	static int frame_num = 0;
+	frame_num++;
 	while(th_encode_packetout(context, last, &oggpacket) > 0) {
 		ogg_stream_packetin(&oggss, &oggpacket);
 		while(ogg_stream_pageout(&oggss, &oggpage)) {
 			fwrite(oggpage.header, oggpage.header_len, 1, out_file);
 			fwrite(oggpage.body, oggpage.body_len, 1, out_file);
-			printf("#");
+			printf("adding frame # %d\n", frame_num);
 		}
 	}		
 
+}
+
+
+string ofxOgg::getOutputFilePath() {
+	return output_file_path;
 }

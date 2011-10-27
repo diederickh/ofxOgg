@@ -31,13 +31,19 @@ extern "C" {
 	#include "vpx_image.h"
 }
 
+#include <set>
+#include "ofMain.h"
+
 class ofxOgg {
 public:
 	ofxOgg();
 	~ofxOgg();
-	void setup(int w, int h, int bytesPerPixel);
+	void setup(int w, int h, int bytesPerPixel = 3);
 	void addFrame(unsigned char* pixels);
+	string getOutputFilePath();
+	string output_file_path;
 private:
+	int number_of_ogg_files;
 	int bpp;
 	int width;
 	int height;

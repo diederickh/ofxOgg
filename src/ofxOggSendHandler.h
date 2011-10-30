@@ -14,7 +14,6 @@ using std::vector;
 using std::deque;
 
 
-
 class ofxOggSendHandler : public Runnable {
 public:
 	ofxOggSendHandler();
@@ -31,5 +30,4 @@ private:
 	static ofxOggSendHandler* instance_;
 };
 
-//extern ofxOggSendHandler* ofxOggSendHandler::instance_;
 #endif

@@ -3,7 +3,10 @@
 #include "Poco/Glob.h"
 #include "Poco/Path.h"
 
-ofxOgg::ofxOgg() {
+ofxOgg::ofxOgg() 
+:is_enabled(true)
+{
+	ofAddListener(ofEvents.setup, this, &ofxOgg::onSetup);
 }
 
 ofxOgg::~ofxOgg() {
@@ -20,7 +23,10 @@ ofxOgg::~ofxOgg() {
 	free(yuv_u);
 	free(yuv_v);
 	fclose(out_file);
-	// @todo free buffers
+}
+
+void ofxOgg::onSetup(ofEventArgs& ev) {
+	setup(ofGetWidth(), ofGetHeight(), 3);
 }
 
 void ofxOgg::setup(int w, int h, int bytesPerPixel) {
@@ -30,17 +36,13 @@ void ofxOgg::setup(int w, int h, int bytesPerPixel) {
 	Poco::Glob::glob(dp, files);
 	std:set<std::string>::iterator it = files.begin();
 	number_of_ogg_files = files.size();
-	printf("Number of ogg files found: %d\n", number_of_ogg_files);
-
-
+	grab_image.allocate(w,h,OF_IMAGE_COLOR);
+	
 	char buf[512];
 	sprintf(buf, "openFramweworksAppMovie-%04d.ogv", number_of_ogg_files);
 	string filename(buf);
 	output_file_path = ofToDataPath(filename, true);
-	printf("Creating file: %s\n", output_file_path.c_str());
 	int i = 44;
-
-
 	
 	width = w;
 	height = h;
@@ -62,9 +64,9 @@ void ofxOgg::setup(int w, int h, int bytesPerPixel) {
     info.fps_denominator = 1;
     info.aspect_numerator = 1;
     info.aspect_denominator = 1;
-   // info.target_bitrate = 1018000;
 	info.quality = 63;
-   // info.keyframe_granule_shift = 0;
+	// info.target_bitrate = 1018000;
+    // info.keyframe_granule_shift = 0;
 	
 	// context to work with.
 	// -----------------------
@@ -78,7 +80,6 @@ void ofxOgg::setup(int w, int h, int bytesPerPixel) {
 	}
 	
     th_info_clear(&info);
-	
 	
 	// Add obligatory headers
 	// ---------------------
@@ -155,12 +156,10 @@ void ofxOgg::setup(int w, int h, int bytesPerPixel) {
 	}
 
 	in_image = vpx_img_alloc(NULL, VPX_IMG_FMT_RGB24, width, height, 0);
-	//out_planes = {ycbcr[0].data, ycbcr[1].data, ycbcr[2].data};
 	out_planes[0] = ycbcr[0].data;
 	out_planes[1] = ycbcr[1].data;
 	out_planes[2] = ycbcr[2].data;
 
-//	int out_strides[3] = {ycbcr[0].stride, ycbcr[1].stride, ycbcr[2].stride};
 	out_strides[0] = ycbcr[0].stride;
 	out_strides[1] = ycbcr[1].stride;
 	out_strides[2] = ycbcr[2].stride;
@@ -168,15 +167,17 @@ void ofxOgg::setup(int w, int h, int bytesPerPixel) {
 	line_size = w * 3;	
 }
 
-void ofxOgg::addFrame(unsigned char* pixels) {
+void ofxOgg::addFrame() {
+	if(!is_enabled) {
+		return;
+	}
+	
+	grab_image.grabScreen(0,0,ofGetWidth(), ofGetHeight());
+	unsigned char* pixels = grab_image.getPixels();
+	
 	// convert RGB to YUV
 	// -------------------------------------------------------------------------
-		
 	in_image = vpx_img_wrap(in_image, VPX_IMG_FMT_RGB24, width, height, 0, pixels);
-//	unsigned char* out_planes[3] = {ycbcr[0].data, ycbcr[1].data, ycbcr[2].data};
-//	int out_strides[3] = {ycbcr[0].stride, ycbcr[1].stride, ycbcr[2].stride};
-	
-//	int line_size = w * 3;
 	int output_slice_h = sws_scale(
 		 convert_context
 		,in_image->planes
@@ -193,13 +194,9 @@ void ofxOgg::addFrame(unsigned char* pixels) {
 		fprintf(stderr, "error: could not encode frame\n");
 		exit(1);
 	}
-	else {
-		//printf("added frame");
-	}
 	
 	ogg_page oggpage;
 	ogg_packet oggpacket;
-//	int last = (i == number_of_frames-1) ? 1 : 0; // set to non zero for last frame 
 	int last = 0;
 	static int frame_num = 0;
 	frame_num++;
@@ -214,7 +211,18 @@ void ofxOgg::addFrame(unsigned char* pixels) {
 
 }
 
-
 string ofxOgg::getOutputFilePath() {
 	return output_file_path;
+}
+
+void ofxOgg::enableRecording() {
+	is_enabled = true;
+}
+
+void ofxOgg::disableRecording() {
+	is_enabled = false;
+}
+
+bool ofxOgg::isRecordingEnabled() {
+	return is_enabled;
 }

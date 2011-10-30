@@ -1,9 +1,7 @@
 #include "ofxOggServer.h"
 #include "ofxOggConnection.h"
 
-
 ofxOggServer* ofxOggServer::instance_ = NULL;
-//ofxKeylogger* ofxKeylogger::instance = NULL;
 
 ofxOggServer::ofxOggServer() 
 :server_port(0)
@@ -11,8 +9,12 @@ ofxOggServer::ofxOggServer()
 ,sock(NULL)
 ,reactor(NULL)
 ,address(NULL)
+,yuv_y(NULL)
+,yuv_u(NULL)
+,yuv_v(NULL)
 {
 	instance_ = this;
+	ofAddListener(ofEvents.setup, this, &ofxOggServer::onSetup);
 }
 
 ofxOggServer::~ofxOggServer() {
@@ -25,12 +27,25 @@ ofxOggServer::~ofxOggServer() {
 	if(address != NULL) {
 		delete address; 
 	}
+	if(yuv_y != NULL) {
+		free(yuv_y);
+	}
+	if(yuv_u != NULL) {
+		free(yuv_u);
+	}
+	if(yuv_v != NULL) {
+		free(yuv_v);
+	}
 }
+
+void ofxOggServer::onSetup(ofEventArgs& ev) {
+	setupOgg(ofGetWidth(),ofGetHeight(), 3);
+}
+
 
 ofxOggServer& ofxOggServer::instance() {
 	return *instance_;
 }
-
 
 void ofxOggServer::setupServer(int port) {
 	server_port = port;
@@ -58,16 +73,10 @@ bool ofxOggServer::start() {
 	reactor = new SocketReactor();
 	acceptor = new ofxOggAcceptor<ofxOggConnection>(*sock, *reactor, this);
 	ofxOggAcceptor<ofxOggConnection> acc(*sock, *reactor, this);
-//	AutoPtr<ofxOggAcceptor<ofxOggConnection> > p(&acc);
-	//acceptor = &acc;
-	send_thread.start(send_handler);	
-//	Thread t;
-//	t.start(*reactor);
-	thread = new Thread();
-	thread->start(*reactor);
-	
-	// start send handler thread.
 
+	send_thread.start(send_handler);	
+	reactor_thread = new Thread();
+	reactor_thread->start(*reactor);
 	return true;
 }
 
@@ -107,8 +116,8 @@ void ofxOggServer::setupOgg(int w, int h, int bytesPerPixel) {
     theora_info.aspect_numerator = 1;
     theora_info.aspect_denominator = 1;
 	theora_info.target_bitrate = 800000;
-//	theora_info.quality = 6;
 	theora_info.keyframe_granule_shift = 1;
+	//theora_info.quality = 6;
 	
 	// context to work with.
 	// -----------------------
@@ -118,8 +127,7 @@ void ofxOggServer::setupOgg(int w, int h, int bytesPerPixel) {
 		exit(1);
 	}	
    th_info_clear(&theora_info);
-	
-	
+		
 	// Add obligatory headers
 	// ---------------------
 	th_comment comment;
@@ -132,13 +140,11 @@ void ofxOggServer::setupOgg(int w, int h, int bytesPerPixel) {
 	while (th_encode_flushheader(theora_context, &comment, &header_packet) > 0) {
 		ogg_stream_packetin(&ogg_stream, &header_packet);
 		while (ogg_stream_pageout(&ogg_stream, &header_page)) {
-			printf("header len: %d page len: %d\n", header_page.header_len, header_page.body_len);
 			header_buffer.storeBytes(header_page.header, header_page.header_len);
 			header_buffer.storeBytes(header_page.body, header_page.body_len);
 		}
 	}
 
-	 
 	// rest of headers... before creating a new page.
 	while (ogg_stream_flush(&ogg_stream, &header_page) > 0) {
 		header_buffer.storeBytes(header_page.header, header_page.header_len);
@@ -199,7 +205,7 @@ void ofxOggServer::setupOgg(int w, int h, int bytesPerPixel) {
 	out_strides[1] = ycbcr[1].stride;
 	out_strides[2] = ycbcr[2].stride;
 
-	line_size = w * 3;	
+	line_size = w * bpp;	
 }
 
 IOBuffer ofxOggServer::getOggHeaderBuffer() {
@@ -207,7 +213,12 @@ IOBuffer ofxOggServer::getOggHeaderBuffer() {
 }
 
 
-void ofxOggServer::addFrame(unsigned char* pixels) {
+void ofxOggServer::addFrame() {
+	// grab pixels from screen
+	grab_image.grabScreen(0,0,width,height);
+	unsigned char* pixels = grab_image.getPixels();
+	
+	// convert
 	in_image = vpx_img_wrap(
 		in_image
 		,VPX_IMG_FMT_RGB24
@@ -246,9 +257,7 @@ void ofxOggServer::addFrame(unsigned char* pixels) {
 		}
 	}
 
-	send_handler.addBuffer(new_buffer);
-	
-	
+	send_handler.addBuffer(new_buffer);	
 }
 
 vector<ofxOggConnection*>& ofxOggServer::getClients() {

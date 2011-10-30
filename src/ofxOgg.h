@@ -1,48 +1,32 @@
 #ifndef OFXOGGH
 #define OFXOGGH
 
-//#include <stdio.h>
-//#include <unistd.h>
-//#include <sys/types.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <math.h>
-//
-//#include <stdio.h>
-//#include <errno.h>
-//#include <ctype.h>
-//#include <unistd.h>
-//#include <sys/types.h>
-//#include <sys/stat.h>
-//#include <fcntl.h>
-//#include <sys/time.h>
-//#include <halfduplex.h> /* For name of the named-pipe */
-
 extern "C" {
-//	#include <ogg/ogg.h>
-//	#include <theora/theoraenc.h>
-//	#include <libswscale/swscale.h>
-//	#include "vpx_image.h"
-	
 	#include "external/theora/theoraenc.h"
 	#include "external/ogg/ogg.h"
-//	#include "external/vorbis/codec.h"
 	#include "external/libswscale/swscale.h"
 	#include "vpx_image.h"
 }
 
+#include "ofxOggServer.h"
 #include <set>
 #include "ofMain.h"
+
 
 class ofxOgg {
 public:
 	ofxOgg();
 	~ofxOgg();
+	void addFrame();
+	void onSetup(ofEventArgs& ev);
+	void enableRecording();
+	void disableRecording();
+	bool isRecordingEnabled();
+private:
 	void setup(int w, int h, int bytesPerPixel = 3);
-	void addFrame(unsigned char* pixels);
 	string getOutputFilePath();
 	string output_file_path;
-private:
+
 	int number_of_ogg_files;
 	int bpp;
 	int width;
@@ -69,6 +53,8 @@ private:
 	unsigned char* out_planes[3];
 	int out_strides[3];
 	int line_size ;
+	ofImage grab_image;
+	bool is_enabled;
 };
 
 #endif

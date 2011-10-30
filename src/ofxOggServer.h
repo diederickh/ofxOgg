@@ -12,13 +12,13 @@
 #include "Poco/NObserver.h"
 #include "Poco/AutoPtr.h"
 
-
+#include "ofMain.h"
 #include "ofxOggConnection.h"
 #include "ofxOggSendHandler.h"
+#include "IOBuffer.h"
+#include "Endianness.h"
 #include <vector>
 #include <string>
-
-
 
 extern "C" {
 	#include "external/theora/theoraenc.h"
@@ -41,8 +41,6 @@ using Poco::Net::IPAddress;
 using std::string;
 using std::vector;
 
-
-
 template<typename T>
 class ofxOggAcceptor;
 
@@ -51,21 +49,24 @@ public:
 
 	ofxOggServer();
 	~ofxOggServer();
+	
+	bool start();
 	void setupServer(int port);
 	void setupServer(string host, int port);
-	void setupOgg(int w, int h, int bpp);
-	bool start();
+	void onSetup(ofEventArgs& ev);
+	void addFrame();
+	
 	void addClient(ofxOggConnection* client);
 	void removeClient(ofxOggConnection* client);
 	static ofxOggServer& instance();
 	IOBuffer getOggHeaderBuffer();
-	void addFrame(unsigned char* pixels);
 	vector<ofxOggConnection*>& getClients();
 	typedef vector<ofxOggConnection*>::iterator iterator;
 
 private:
+	void setupOgg(int w, int h, int bpp);
 	void initOgg();
-	
+	ofImage grab_image;
 	int server_port;
 	string server_host;
 	ServerSocket* sock;
@@ -73,7 +74,7 @@ private:
 	SocketAddress* address;
 	Mutex mutex;
 	SocketAcceptor<ofxOggConnection>* acceptor;
-	Thread* thread;
+	Thread* reactor_thread;
 	Thread send_thread;
 	ofxOggSendHandler send_handler;
 	vector<ofxOggConnection*> clients;

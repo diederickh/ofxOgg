@@ -13,7 +13,6 @@ ofxOggSendHandler::~ofxOggSendHandler() {
 
 void ofxOggSendHandler::run() {
 	while(true) {
-		//printf("..");
 		mutex.lock();
 		vector<IOBuffer>::iterator it = buffers.begin();
 		while(it != buffers.end()) {
@@ -26,7 +25,6 @@ void ofxOggSendHandler::run() {
 			it = buffers.erase(it);
 		}
 		mutex.unlock();
-		//::sleep(1000);
 	}
 }
 

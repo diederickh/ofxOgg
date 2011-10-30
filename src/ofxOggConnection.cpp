@@ -8,8 +8,6 @@ ofxOggConnection::ofxOggConnection(StreamSocket rSocket, SocketReactor& rReactor
 ,reactor(rReactor)
 ,ogg_server(NULL)
 {
-
-	//ogg_server->addClient(this);
 	
 	// add read event
 	reactor.addEventHandler(
@@ -29,8 +27,6 @@ ofxOggConnection::ofxOggConnection(StreamSocket rSocket, SocketReactor& rReactor
 					,&ofxOggConnection::onShutdown
 		)
 	);
-//	read_buffer.setup(4096);
-	//delete this;
 }
 
 ofxOggConnection::~ofxOggConnection() {
@@ -48,14 +44,9 @@ void ofxOggConnection::onReadable(const AutoPtr<ReadableNotification>& pNotif) {
 	int read = sock.receiveBytes(buf, 1024);
 	if(read > 0) {
 		read_buffer.storeBytes(buf, read);
-		printf("< read: %d\n", read);
 		parseHTTPRequest();
-
-		//delete this;
 	}
 	else {
-		printf("< nothing read.\n");
-		//ogg_server->removeClient(this);
 		ofxOggServer::instance().removeClient(this);
 		delete this;
 	}
@@ -66,7 +57,6 @@ void ofxOggConnection::parseHTTPRequest() {
 	int num_bytes = read_buffer.getNumBytesStored();
 	if(num_bytes > 4) {
 		for(int i = 0; i < num_bytes; ++i) {
-			printf("%c", read_buffer.buffer[i],read_buffer.buffer[i]);
 			if(read_buffer.buffer[i] == '\r' 
 				&& read_buffer.buffer[i+1] == '\n'
 				&& read_buffer.buffer[i+2] == '\r'
@@ -80,7 +70,6 @@ void ofxOggConnection::parseHTTPRequest() {
 	}
 	
 	if(complete_header) {
-		printf("----------\n");
 		// send response.
 		sendHTTPResponse();
 		sendOggHeader();
@@ -88,7 +77,6 @@ void ofxOggConnection::parseHTTPRequest() {
 		deque<IOBuffer>::iterator it = prebuffers.begin();
 		int num = 0;
 		while(it != prebuffers.end()) {
-			printf("sending pre buffer: %d...\n", num);
 			++num;
 			send(*it);
 			++it;
@@ -123,9 +111,7 @@ void ofxOggConnection::send(IOBuffer buf) {
 	int bytes_sent = 0;
 	int left = num_bytes;
 	while(left > 0) {
-		printf(">> sending...");
 		int done = sock.sendBytes(buf.getPtr()+bytes_sent, num_bytes);
-		printf("..\n");
 		if(done == -1) {
 			ofxOggServer::instance().removeClient(this);
 			delete this;
@@ -133,13 +119,11 @@ void ofxOggConnection::send(IOBuffer buf) {
 		}
 		left -= done;
 		bytes_sent += done;
-		printf(">> sending %d/%d\n", bytes_sent, num_bytes);
 	}
 }
 
 
 void ofxOggConnection::onShutdown(const AutoPtr<ShutdownNotification>& pNotif) {
-	printf("on shutdown");
 	ofxOggServer::instance().removeClient(this);
 	delete this;
 }

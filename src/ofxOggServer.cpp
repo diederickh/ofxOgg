@@ -255,6 +255,7 @@ void ofxOggServer::addFrame() {
 			new_buffer.storeBytes(oggpage.header, oggpage.header_len);
 			new_buffer.storeBytes(oggpage.body, oggpage.body_len); 
 		}
+		//printf("add frame...\n");
 	}
 
 	send_handler.addBuffer(new_buffer);	

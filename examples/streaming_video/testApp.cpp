@@ -15,7 +15,7 @@ void testApp::setup(){
 	ofBackground(33);
 	
 	// start server on port 1111
-	ogg_server.setupServer(1111);
+	ogg_server.setupServer("localhost", 1111);
 	ogg_server.start();
 }
 

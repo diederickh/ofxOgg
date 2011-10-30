@@ -27,6 +27,7 @@ ofxOggConnection::ofxOggConnection(StreamSocket rSocket, SocketReactor& rReactor
 					,&ofxOggConnection::onShutdown
 		)
 	);
+	printf("new client...\n");
 }
 
 ofxOggConnection::~ofxOggConnection() {

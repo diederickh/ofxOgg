@@ -34,7 +34,7 @@ void testApp::draw(){
 		,10 + (1+cos(t * 1.3)*0.5)*50
 	);
 	
-	// server a new frame
+	// serve a new frame
 	ogg_server.addFrame();
 }
 

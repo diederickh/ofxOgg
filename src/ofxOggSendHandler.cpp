@@ -14,7 +14,7 @@ ofxOggSendHandler::~ofxOggSendHandler() {
 void ofxOggSendHandler::run() {
 	while(true) {
 		mutex.lock();
-		vector<IOBuffer>::iterator it = buffers.begin();
+		vector<OggBuffer>::iterator it = buffers.begin();
 		while(it != buffers.end()) {
 			vector<ofxOggConnection*>& clients = ofxOggServer::instance().getClients();
 			ofxOggServer::iterator client_it = clients.begin();
@@ -28,7 +28,7 @@ void ofxOggSendHandler::run() {
 	}
 }
 
-void ofxOggSendHandler::addBuffer(IOBuffer buf) {
+void ofxOggSendHandler::addBuffer(OggBuffer buf) {
 	mutex.lock();
 		buffers.push_back(buf);
 		prebuffers.push_back(buf);
@@ -39,7 +39,7 @@ void ofxOggSendHandler::addBuffer(IOBuffer buf) {
 }
 
 
-deque<IOBuffer> ofxOggSendHandler::getPreBuffers() {
+deque<OggBuffer> ofxOggSendHandler::getPreBuffers() {
 	return prebuffers;
 }
 

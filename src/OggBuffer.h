@@ -1,5 +1,5 @@
-#ifndef ROXLU_IOBUFFERH
-#define ROXLU_IOBUFFERH
+#ifndef ROXLU_OggBufferH
+#define ROXLU_OggBufferH
 
 #include <inttypes.h>
 #include <string>
@@ -16,7 +16,7 @@ using std::ofstream;
 #define GET_IB_POINTER(x) 				 ((uint8_t *)((x).buffer + (x).consumed))
 #define GET_AVAILABLE_BYTES_COUNT(x)     ((x).published - (x).consumed)
 
-class IOBuffer {
+class OggBuffer {
 public:	
 	uint8_t* buffer;
 	uint32_t	size;
@@ -25,8 +25,8 @@ public:
 	uint32_t	min_chunk_size;
 	
 public:
-	IOBuffer();
-	virtual ~IOBuffer();
+	OggBuffer();
+	virtual ~OggBuffer();
 	
 	// setup
 	void setup();
@@ -50,8 +50,8 @@ public:
 	void storeUI16(uint16_t data);
 	void storeUI32(uint32_t data);
 	void storeRepeat(uint8_t byte, uint32_t numBytes); // rename!
-	void storeBuffer(IOBuffer& other); // copies only stored data
-	int storeBuffer(IOBuffer& other, uint32_t numBytes);
+	void storeBuffer(OggBuffer& other); // copies only stored data
+	int storeBuffer(OggBuffer& other, uint32_t numBytes);
 
 	void storeString(string data);
 	void storeStringWithSize(string data); // adds a uint16_t with the size of the string 
@@ -117,7 +117,7 @@ public:
 };
 
 
-inline uint8_t IOBuffer::getAt(uint8_t position) {
+inline uint8_t OggBuffer::getAt(uint8_t position) {
 	return buffer[position];
 }
 #endif

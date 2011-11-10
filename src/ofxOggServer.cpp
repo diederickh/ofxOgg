@@ -208,7 +208,7 @@ void ofxOggServer::setupOgg(int w, int h, int bytesPerPixel) {
 	line_size = w * bpp;	
 }
 
-IOBuffer ofxOggServer::getOggHeaderBuffer() {
+OggBuffer ofxOggServer::getOggHeaderBuffer() {
 	return header_buffer;
 }
 
@@ -248,7 +248,7 @@ void ofxOggServer::addFrame() {
 	ogg_packet oggpacket;
 	int last = 0;
 
-	IOBuffer new_buffer;
+	OggBuffer new_buffer;
 	while(th_encode_packetout(theora_context, last, &oggpacket) > 0) {
 		ogg_stream_packetin(&ogg_stream, &oggpacket);
 		while(ogg_stream_pageout(&ogg_stream, &oggpage)) {

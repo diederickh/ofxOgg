@@ -15,7 +15,7 @@
 #include "ofMain.h"
 #include "ofxOggConnection.h"
 #include "ofxOggSendHandler.h"
-#include "IOBuffer.h"
+#include "OggBuffer.h"
 #include "Endianness.h"
 #include <vector>
 #include <string>
@@ -59,7 +59,7 @@ public:
 	void addClient(ofxOggConnection* client);
 	void removeClient(ofxOggConnection* client);
 	static ofxOggServer& instance();
-	IOBuffer getOggHeaderBuffer();
+	OggBuffer getOggHeaderBuffer();
 	vector<ofxOggConnection*>& getClients();
 	typedef vector<ofxOggConnection*>::iterator iterator;
 
@@ -78,7 +78,7 @@ private:
 	Thread send_thread;
 	ofxOggSendHandler send_handler;
 	vector<ofxOggConnection*> clients;
-	//deque<IOBuffer> prebuffers;
+	//deque<OggBuffer> prebuffers;
 	static ofxOggServer* instance_;
 	
 	int width;
@@ -109,7 +109,7 @@ private:
 	int out_strides[3];
 	int line_size ;
 	
-	IOBuffer header_buffer;
+	OggBuffer header_buffer;
 	// ================================================================	
 	
 };

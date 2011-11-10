@@ -1,10 +1,10 @@
-#include "IOBuffer.h"
+#include "OggBuffer.h"
 #include "Endianness.h"
 #include <iostream>
 using std::cout;
 using std::endl;
 
-IOBuffer::IOBuffer() 
+OggBuffer::OggBuffer() 
 :buffer(NULL)
 ,size(0)
 ,published(0)
@@ -14,15 +14,15 @@ IOBuffer::IOBuffer()
 	setup(); // should we do this? or its up to the user (?)
 }
 
-IOBuffer::~IOBuffer() {
+OggBuffer::~OggBuffer() {
 	cleanup();
 }
 
 
-bool IOBuffer::loadFromFile(string path) {
+bool OggBuffer::loadFromFile(string path) {
 	ifstream ifs(path.c_str(), std::ios::in|std::ios::binary|std::ios::ate);
 	if(!ifs.is_open()) {
-		printf("IOBuffer error: cannot read file\n");
+		printf("OggBuffer error: cannot read file\n");
 		return false;
 	}
 	// get size and go back to start.
@@ -42,7 +42,7 @@ bool IOBuffer::loadFromFile(string path) {
 }
 
 // http://www.cplusplus.com/reference/iostream/ofstream/ofstream/
-bool IOBuffer::saveToFile(string path) {
+bool OggBuffer::saveToFile(string path) {
 	ofstream ofs(path.c_str(), std::ios::out | std::ios::binary);
 	if(!ofs.is_open()) {
 		return false;
@@ -59,18 +59,18 @@ bool IOBuffer::saveToFile(string path) {
 }
 
 
-void IOBuffer::setup() {
+void OggBuffer::setup() {
 	setup(min_chunk_size);	
 }
 
-void IOBuffer::setup(uint32_t expectedSize) {
+void OggBuffer::setup(uint32_t expectedSize) {
 	if( (buffer != NULL)
 		|| (size != 0)
 		|| (published != 0)
 		|| (consumed != 0)
 	)
 	{
-		printf("iobuffer error: buffer has been setup already\n");
+		printf("OggBuffer error: buffer has been setup already\n");
 		return;
 	}
 	
@@ -78,7 +78,7 @@ void IOBuffer::setup(uint32_t expectedSize) {
 	//memset(buffer, 0, expectedSize);
 }
 
-bool IOBuffer::ensureSize(uint32_t expectedSize) {
+bool OggBuffer::ensureSize(uint32_t expectedSize) {
 	
 	// 1. we have enough space
 	if(published + expectedSize <= size) {
@@ -117,19 +117,19 @@ bool IOBuffer::ensureSize(uint32_t expectedSize) {
 	return true;
 }
 
-uint8_t* IOBuffer::getPtr() {
+uint8_t* OggBuffer::getPtr() {
 	return buffer;
 }
 
-uint8_t* IOBuffer::getStorePtr() {
+uint8_t* OggBuffer::getStorePtr() {
 	return buffer+published;
 }
 
-uint8_t* IOBuffer::getConsumePtr() {
+uint8_t* OggBuffer::getConsumePtr() {
 	return buffer+consumed;
 }
 
-bool IOBuffer::moveData() {
+bool OggBuffer::moveData() {
 	if(published - consumed <= consumed) {
 		memcpy(buffer, buffer+consumed, published - consumed);
 		published = published - consumed;
@@ -138,9 +138,9 @@ bool IOBuffer::moveData() {
 	return true;
 }
 
-void IOBuffer::cleanup() {
+void OggBuffer::cleanup() {
 	if(buffer != NULL) {
-		//printf("* need to free memory in iobuffer \n");
+		//printf("* need to free memory in OggBuffer \n");
 		//delete[] buffer;
 		buffer = NULL;
 	}	
@@ -149,22 +149,22 @@ void IOBuffer::cleanup() {
 	published = 0;
 }
 
-void IOBuffer::setMinChunkSize(uint32_t minSize) {
+void OggBuffer::setMinChunkSize(uint32_t minSize) {
 	//assert(minSize > 0 && minSize < 16 * 1024 * 1024);
 	min_chunk_size = minSize;
 }
 
-uint32_t IOBuffer::getMinChunkSize() {
+uint32_t OggBuffer::getMinChunkSize() {
 	return min_chunk_size;
 }
 
-void IOBuffer::storeByte(uint8_t byte) {
+void OggBuffer::storeByte(uint8_t byte) {
 	ensureSize(1);
 	buffer[published] = byte;
 	published++;
 }
 
-bool IOBuffer::storeBytes(const uint8_t* someData, const uint32_t numBytes) {
+bool OggBuffer::storeBytes(const uint8_t* someData, const uint32_t numBytes) {
 	//printf("storeBytes: %d\n", numBytes);
 	if(!ensureSize(numBytes)) {
 		return false;
@@ -174,7 +174,7 @@ bool IOBuffer::storeBytes(const uint8_t* someData, const uint32_t numBytes) {
 	return true;
 }
 
-bool IOBuffer::storeBytes(const char* someData, const uint32_t numBytes) {
+bool OggBuffer::storeBytes(const char* someData, const uint32_t numBytes) {
 	if(!ensureSize(numBytes)) {
 		return false;
 	}
@@ -184,50 +184,50 @@ bool IOBuffer::storeBytes(const char* someData, const uint32_t numBytes) {
 }
 
 
-void IOBuffer::storeRepeat(uint8_t byte, uint32_t numBytes) {
+void OggBuffer::storeRepeat(uint8_t byte, uint32_t numBytes) {
 	ensureSize(numBytes);
 	memset(buffer + published, byte, numBytes);
 	published += numBytes;
 }
 
-void IOBuffer::storeUI8(uint8_t byte) {
+void OggBuffer::storeUI8(uint8_t byte) {
 	storeByte(byte);
 }
 
-void IOBuffer::storeUI16(uint16_t data) {
+void OggBuffer::storeUI16(uint16_t data) {
 	ensureSize(16);
 	memcpy(buffer+published, &data, 2);
 	published += 2;
 }
 
-void IOBuffer::storeUI32(uint32_t data) {
+void OggBuffer::storeUI32(uint32_t data) {
 	ensureSize(32);
 	memcpy(buffer+published, &data, 4);
 	published += 4;
 }
 
-void IOBuffer::storeBigEndianUI16(uint16_t data) {
+void OggBuffer::storeBigEndianUI16(uint16_t data) {
 	ensureSize(16);
 	data = ToBE16(data);
 	memcpy(buffer+published, &data, 2);
 	published += 2;
 }
 
-void IOBuffer::storeBigEndianUI32(uint32_t data) {
+void OggBuffer::storeBigEndianUI32(uint32_t data) {
 	ensureSize(4);
 	data = ToBE32(data);
 	memcpy(buffer+published, &data, 4);
 	published += 4;
 }
 
-void IOBuffer::storeBigEndianUI64(uint64_t data) {
+void OggBuffer::storeBigEndianUI64(uint64_t data) {
 	ensureSize(8);
 	data = ToBE64(data);
 	memcpy(buffer+published, &data, 8);
 	published += 8;
 }
 
-void IOBuffer::storeBigEndianDouble(double data) {
+void OggBuffer::storeBigEndianDouble(double data) {
 	ensureSize(8);
 	uint64_t val = 0;
 	memcpy(&val, &data, 8);
@@ -237,7 +237,7 @@ void IOBuffer::storeBigEndianDouble(double data) {
 }
 
 
-void IOBuffer::storeString(string data) {
+void OggBuffer::storeString(string data) {
 	uint32_t len = (uint32_t)data.length();
 	ensureSize(len);
 	memcpy(buffer+published, (uint8_t *)data.c_str(), len);
@@ -245,17 +245,17 @@ void IOBuffer::storeString(string data) {
 }
 
 // stores a uint16_t (big endian) + string
-void IOBuffer::storeStringWithSize(string data) {
+void OggBuffer::storeStringWithSize(string data) {
 	storeBigEndianUI16(data.size());
 	storeString(data);
 }
 
 // copy data from another buffer.
-void IOBuffer::storeBuffer(IOBuffer& other) {
+void OggBuffer::storeBuffer(OggBuffer& other) {
 	storeBuffer(other, other.getNumBytesStored());	
 }
 
-int IOBuffer::storeBuffer(IOBuffer& other, uint32_t numBytes) {
+int OggBuffer::storeBuffer(OggBuffer& other, uint32_t numBytes) {
 	/*
 	cout << "Store from other buffer. Bytes:" << numBytes << endl;
 	cout << "this.published: " << published << endl;
@@ -277,7 +277,7 @@ int IOBuffer::storeBuffer(IOBuffer& other, uint32_t numBytes) {
 	return numBytes;
 }
 
-uint32_t IOBuffer::getMostNumberOfBytesWeCanConsume(uint32_t tryToRead) {
+uint32_t OggBuffer::getMostNumberOfBytesWeCanConsume(uint32_t tryToRead) {
 //	printf("@ published: %d consumed:%d trying to read: %d\n", published, consumed, tryToRead);
 	int space = published - consumed;
 	if(space <= 0) {
@@ -296,35 +296,35 @@ uint32_t IOBuffer::getMostNumberOfBytesWeCanConsume(uint32_t tryToRead) {
 }
 
 
-bool IOBuffer::ignore(uint32_t numBytes) {
+bool OggBuffer::ignore(uint32_t numBytes) {
 	consumed += numBytes;
 	recycle();	
 	return true;
 }
-bool IOBuffer::reuse(uint32_t numBytes) {
+bool OggBuffer::reuse(uint32_t numBytes) {
 	consumed -= numBytes;
 	return true;
 }
 
-void IOBuffer::setNumBytesStored(uint32_t numBytes) {
+void OggBuffer::setNumBytesStored(uint32_t numBytes) {
 	published = numBytes;
 }
 
-void IOBuffer::addNumBytesStored(uint32_t numBytes) {
+void OggBuffer::addNumBytesStored(uint32_t numBytes) {
 	published += numBytes;
 }
 
-void IOBuffer::addNumBytesConsumed(uint32_t numBytes) {
+void OggBuffer::addNumBytesConsumed(uint32_t numBytes) {
 	consumed += numBytes;
 }
 
-uint32_t IOBuffer::getNumBytesStored() {
+uint32_t OggBuffer::getNumBytesStored() {
 	return published;
 }
 
 
 
-void IOBuffer::recycle() {
+void OggBuffer::recycle() {
 	if(consumed != published) {
 		return;
 	}
@@ -332,20 +332,20 @@ void IOBuffer::recycle() {
 	published = 0;
 }
 
-void IOBuffer::reset() {
+void OggBuffer::reset() {
 	consumed = 0; 
 	published = 0;
 }
-void IOBuffer::resetConsumed() {
+void OggBuffer::resetConsumed() {
 	consumed = 0;
 }
-void IOBuffer::resetStored() {
+void OggBuffer::resetStored() {
 	published = 0;
 }
 
 // Retrieve from buffer and return data
 //------------------------------------------------------------------------------
-int IOBuffer::consumeBytes(uint8_t* buf, uint32_t numBytes) {
+int OggBuffer::consumeBytes(uint8_t* buf, uint32_t numBytes) {
 	int32_t left = (published - consumed);
 	if(left < numBytes) {
 		numBytes = left;
@@ -373,18 +373,18 @@ int IOBuffer::consumeBytes(uint8_t* buf, uint32_t numBytes) {
 	return numBytes;
 }
 
-uint8_t IOBuffer::consumeByte() {
+uint8_t OggBuffer::consumeByte() {
 	return consumeUI8();
 }
 
-uint8_t IOBuffer::consumeUI8() {
+uint8_t OggBuffer::consumeUI8() {
 	uint8_t val = 0;
 	memcpy(&val, buffer+consumed, 1);
 	consumed += 1;
 	return val;
 }
 
-uint16_t IOBuffer::consumeUI16() {
+uint16_t OggBuffer::consumeUI16() {
 	uint16_t val = 0;
 	memcpy(&val, buffer+consumed, 2);
 	consumed += 2;
@@ -392,49 +392,49 @@ uint16_t IOBuffer::consumeUI16() {
 
 }
 
-uint32_t IOBuffer::consumeUI32() {
+uint32_t OggBuffer::consumeUI32() {
 	uint32_t val = 0;
 	memcpy(&val, buffer+consumed, 4);
 	consumed += 4;
 	return val;
 }
 
-uint64_t IOBuffer::consumeUI64() {
+uint64_t OggBuffer::consumeUI64() {
 	uint64_t val = 0;
 	memcpy(&val, buffer+consumed, 8);
 	consumed += 8;
 	return val;
 }
 
-int8_t  IOBuffer::consumeI8() {
+int8_t  OggBuffer::consumeI8() {
 	int8_t val = 0;
 	memcpy(&val, buffer+consumed, 1);
 	consumed += 1;
 	return val;
 }
 
-int16_t IOBuffer::consumeI16() {
+int16_t OggBuffer::consumeI16() {
 	int16_t val = 0;
 	memcpy(&val, buffer+consumed, 2);
 	consumed += 2;
 	return val;
 }
 
-int32_t IOBuffer::consumeI32() {
+int32_t OggBuffer::consumeI32() {
 	int32_t val = 0;
 	memcpy(&val, buffer+consumed, 4);
 	consumed += 4;
 	return val;
 }
 
-int64_t IOBuffer::consumeI64() {
+int64_t OggBuffer::consumeI64() {
 	int64_t val = 0;
 	memcpy(&val, buffer+consumed, 8);
 	consumed += 8;
 	return val;
 }
 
-double IOBuffer::consumeDouble() {
+double OggBuffer::consumeDouble() {
 	double val = 0;
 	memcpy(&val, buffer+consumed, 8);
 	consumed += 8;
@@ -443,7 +443,7 @@ double IOBuffer::consumeDouble() {
 
 // when you assume the data is big endian, convert it to system 
 // -----------------------------------------------------------------------------
-uint16_t IOBuffer::consumeBigEndianUI16() {
+uint16_t OggBuffer::consumeBigEndianUI16() {
 	uint16_t val = 0;
 	memcpy(&val, buffer+consumed, 2);
 	consumed += 2;
@@ -451,7 +451,7 @@ uint16_t IOBuffer::consumeBigEndianUI16() {
 	return val;
 }
 
-uint32_t IOBuffer::consumeBigEndianUI32() {
+uint32_t OggBuffer::consumeBigEndianUI32() {
 	uint32_t val = 0;
 	memcpy(&val, buffer+consumed, 4);
 	consumed += 4;
@@ -459,7 +459,7 @@ uint32_t IOBuffer::consumeBigEndianUI32() {
 	return val;
 }
 
-uint64_t IOBuffer::consumeBigEndianUI64() {
+uint64_t OggBuffer::consumeBigEndianUI64() {
 	uint64_t val = 0;
 	memcpy(&val, buffer+consumed, 8);
 	val = FromBE64(val);
@@ -467,7 +467,7 @@ uint64_t IOBuffer::consumeBigEndianUI64() {
 	return val;
 }
 
-double IOBuffer::consumeBigEndianDouble() {
+double OggBuffer::consumeBigEndianDouble() {
 	uint64_t val = 0;
 	memcpy(&val, buffer+consumed, 8);
 	val = FromBE64(val);
@@ -479,7 +479,7 @@ double IOBuffer::consumeBigEndianDouble() {
 	return d;
 }
 
-int16_t IOBuffer::consumeBigEndianI16() {
+int16_t OggBuffer::consumeBigEndianI16() {
 	int16_t val = 0;
 	memcpy(&val, buffer+consumed, 2);
 	val = FromBE16(val);
@@ -487,7 +487,7 @@ int16_t IOBuffer::consumeBigEndianI16() {
 	return val;
 }
 
-int32_t IOBuffer::consumeBigEndianI32() {
+int32_t OggBuffer::consumeBigEndianI32() {
 	int32_t val = 0;
 	memcpy(&val, buffer+consumed, 4);
 	val = FromBE32(val);
@@ -495,7 +495,7 @@ int32_t IOBuffer::consumeBigEndianI32() {
 	return val;
 }
 
-int64_t IOBuffer::consumeBigEndianI64() {
+int64_t OggBuffer::consumeBigEndianI64() {
 	int64_t val = 0;
 	memcpy(&val, buffer+consumed, 8);
 	val = FromBE64(val);
@@ -507,7 +507,7 @@ int64_t IOBuffer::consumeBigEndianI64() {
 // -----------------------------------------------------------------------------
 
 // returns where we found the string, or 0 when not found.
-int IOBuffer::consumeUntil(uint8_t until, string& found) {
+int OggBuffer::consumeUntil(uint8_t until, string& found) {
 	for(int i = consumed; i < published; ++i) {
 		found.push_back((char)buffer[i]);
 		if(buffer[i] == until) {
@@ -519,7 +519,7 @@ int IOBuffer::consumeUntil(uint8_t until, string& found) {
 }
 
 // consume up to the given string, if not foudn return 0 else bytes consumed
-int IOBuffer::consumeUntil(string until, string& found) {
+int OggBuffer::consumeUntil(string until, string& found) {
 	int search_size = until.size();
 	const char* search = until.c_str();
 	int k = 0;
@@ -549,27 +549,27 @@ int IOBuffer::consumeUntil(string until, string& found) {
 	return 0;
 }	
 
-string IOBuffer::consumeString(uint32_t upToNumBytes) {
+string OggBuffer::consumeString(uint32_t upToNumBytes) {
 	string str((char*)buffer+consumed, upToNumBytes);
 	consumed += upToNumBytes;
 	return str;
 }
 
 // we assume you used storeStringWithSize 
-string IOBuffer::consumeStringWithSize() {
+string OggBuffer::consumeStringWithSize() {
 	uint16_t num_bytes_in_string = consumeBigEndianUI16();
 	return consumeString(num_bytes_in_string);
 }
 
 // operators
 //------------------------------------------------------------------------------
-uint8_t& IOBuffer::operator[](uint32_t index) const {
+uint8_t& OggBuffer::operator[](uint32_t index) const {
 	return buffer[index];
 }
 
 // helpers
 //------------------------------------------------------------------------------
-void IOBuffer::printHex(uint32_t start, uint32_t end) {
+void OggBuffer::printHex(uint32_t start, uint32_t end) {
 	if(end == 0) {
 		end = published;
 	}
@@ -590,7 +590,7 @@ void IOBuffer::printHex(uint32_t start, uint32_t end) {
 	printf("\n");
 }
 
-void IOBuffer::printDoubleAsHex(double d) {
+void OggBuffer::printDoubleAsHex(double d) {
 	uint8_t tmp_buf[8];
 	memcpy(tmp_buf,&d,8);
 	for(int i = 0; i < 8; ++i) {
@@ -599,12 +599,12 @@ void IOBuffer::printDoubleAsHex(double d) {
 	printf("\n");
 }
 
-void IOBuffer::printUI16AsHex(uint16_t toPrint) {
+void OggBuffer::printUI16AsHex(uint16_t toPrint) {
 	uint8_t tmp_buf[2];
 	memcpy(tmp_buf, &toPrint, 2);
 	printf("%02X %02X\n", tmp_buf[0], tmp_buf[1]);
 }
 
-bool IOBuffer::hasBytesToRead() {
+bool OggBuffer::hasBytesToRead() {
 	return consumed < published;
 }

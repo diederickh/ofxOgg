@@ -74,8 +74,8 @@ void ofxOggConnection::parseHTTPRequest() {
 		// send response.
 		sendHTTPResponse();
 		sendOggHeader();
-		deque<IOBuffer> prebuffers = ofxOggSendHandler::instance().getPreBuffers();
-		deque<IOBuffer>::iterator it = prebuffers.begin();
+		deque<OggBuffer> prebuffers = ofxOggSendHandler::instance().getPreBuffers();
+		deque<OggBuffer>::iterator it = prebuffers.begin();
 		int num = 0;
 		while(it != prebuffers.end()) {
 			++num;
@@ -100,14 +100,14 @@ void ofxOggConnection::sendHTTPResponse() {
 		<< "\r\n";
 			
 	string http_header		= ss.str();
-	IOBuffer http_header_buffer;
+	OggBuffer http_header_buffer;
 	http_header_buffer.storeString(http_header);
 	send(http_header_buffer);
 
 }
 
 
-void ofxOggConnection::send(IOBuffer buf) {
+void ofxOggConnection::send(OggBuffer buf) {
 	int num_bytes = buf.getNumBytesStored();
 	int bytes_sent = 0;
 	int left = num_bytes;

@@ -3,7 +3,7 @@
 
 #include <Poco/Thread.h>
 #include <Poco/Runnable.h>
-#include "IOBuffer.h"
+#include "OggBuffer.h"
 #include <vector>
 #include <deque>
 
@@ -19,13 +19,13 @@ public:
 	ofxOggSendHandler();
 	~ofxOggSendHandler();
 	virtual void run();
-	void addBuffer(IOBuffer buf);
-	deque<IOBuffer> getPreBuffers();
+	void addBuffer(OggBuffer buf);
+	deque<OggBuffer> getPreBuffers();
 	static ofxOggSendHandler& instance();
 private:
 	Mutex mutex;
-	deque<IOBuffer> prebuffers;
-	vector<IOBuffer> buffers;
+	deque<OggBuffer> prebuffers;
+	vector<OggBuffer> buffers;
 	
 	static ofxOggSendHandler* instance_;
 };

@@ -18,7 +18,7 @@
 #include "Poco/StringTokenizer.h"
 #include "Poco/String.h"
 #include <iostream>
-#include "IOBuffer.h"
+#include "OggBuffer.h"
 
 using Poco::Net::SocketReactor;
 using Poco::Net::SocketAcceptor;
@@ -42,13 +42,13 @@ public:
 
 	~ofxOggConnection();
 	void setup(ofxOggServer* oggServer);
-	int write(IOBuffer& amfBuffer);
+	int write(OggBuffer& amfBuffer);
 	void onReadable(const AutoPtr<ReadableNotification>& pNotif);
 	void onShutdown(const AutoPtr<ShutdownNotification>& pNotif);
 	void parseHTTPRequest();
 	void sendHTTPResponse();
 	void sendOggHeader();
-	void send(IOBuffer buffer);
+	void send(OggBuffer buffer);
 
 private:
 	// ogg
@@ -59,6 +59,6 @@ private:
 	SocketReactor& reactor;
 
 	// buffers
-	IOBuffer read_buffer;
+	OggBuffer read_buffer;
 };
 #endif
